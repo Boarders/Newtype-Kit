@@ -4,9 +4,9 @@ module Newtype where
 
 import Data.Functor.Const (Const(..))
 import Data.Functor.Identity (Identity(..))
-import Data.Profunctor ()
+import Data.Profunctor (Profunctor(..))
 import Data.Monoid (Sum(..), Product(..))
-import Data.Functor.Compose (Compose(
+import Data.Functor.Compose (Compose(..))
 
 class Newtype n where
   type Old n
@@ -47,9 +47,20 @@ oldly f = unpack . f . pack
 
 ala ::
      (Newtype n, Newtype n', Functor f, Functor g)
-  => (f n -> g n') -> (Old n -> n)
-  -> (f (Old n) -> g (Old n'))
+  => (f n -> g n')              -- higher order function
+  -> (Old n -> n)               -- packing function, used to allow type inference.
+  -> (f (Old n) -> g (Old n'))  -- higher order function on old types
 ala hof _ = (fmap unpack) . hof . (fmap pack)
+
+-- """ more general """ ---
+
+ala' ::
+     (Newtype n, Newtype n', Profunctor p)
+ => p n n'
+ -> (Old n -> n)
+ -> p (Old n) (Old n')
+ala' hof _ = dimap pack unpack $ hof
+
 
 foldMapNew ::
     (Monoid m, Traversable t)
